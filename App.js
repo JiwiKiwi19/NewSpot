@@ -20,7 +20,7 @@ export default function App() {
   return (
     <NavigationContainer theme={MyTheme}>
       <Navigator 
-      initialRouteName='OrderQueuePage'
+      initialRouteName='EnterNamePage'
       screenOptions={{
         headerShown: false, // headerMode="none" is deprecated so don't use that
       }}>

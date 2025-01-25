@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Spot",
-    "slug": "Spot",
+    "slug": "spot",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -23,6 +23,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "676104d1-ab47-4913-bddb-0c40011e0731"
+      }
+    },
+    "owner": "mp13"
   }
 }
