@@ -1,20 +1,32 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
+import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator  } from '@react-navigation/stack';
+
+const { Navigator, Screen } = createStackNavigator();
+
+import EnterNamePage from './pages/customer/EnterNamePage.js';
+import OrderQueuePage from './pages/restaurant/OrderQueuePage.js'
+
+const MyTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: 'rgb(255, 255, 255)',
+  },
+};
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer theme={MyTheme}>
+      <Navigator 
+      initialRouteName='OrderQueuePage'
+      screenOptions={{
+        headerShown: false, // headerMode="none" is deprecated so don't use that
+      }}>
+        <Screen name="EnterNamePage" component={EnterNamePage} />
+        <Screen name="OrderQueuePage" component={OrderQueuePage} />
+      </Navigator>
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
