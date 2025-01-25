@@ -3,6 +3,10 @@ import { Text, TextInput, Button } from "react-native-paper";
 import { StyleSheet } from "react-native";
 import { useState, useEffect } from "react";
 import { View } from "react-native-web";
+import { LogBox } from "react-native";
+
+// LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
+// LogBox.ignoreAllLogs(true);//Ignore all log notifications
 
 export default function EnterNamePage({ navigation }) {
 
