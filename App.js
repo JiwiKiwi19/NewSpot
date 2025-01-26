@@ -26,10 +26,13 @@ export default function App() {
   return (
     <NavigationContainer theme={MyTheme}>
       <Navigator 
-      initialRouteName='CustomerMenuPage'
+
+
+      initialRouteName='OrderQueuePage'
+> 758b5d9 (first commit)
       screenOptions={{
         headerShown: false, // headerMode="none" is deprecated so don't use that
-      }}>
+      }}
         {/* Restaurant Pages */}
         <Screen name="OrderQueuePage" component={OrderQueuePage} />
 
