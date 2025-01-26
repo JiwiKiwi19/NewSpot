@@ -52,6 +52,7 @@ export default function EnterNamePage({ navigation }) {
                 </Button>
 
             </View>
+            
             <Text style={styles.copyrightText}>Powered by Spot Inc.</Text>
 
         </SafeAreaView>
