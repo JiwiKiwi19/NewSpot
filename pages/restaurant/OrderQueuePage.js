@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { SafeAreaView, View, Text, FlatList, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
+import { SafeAreaView, View, Text, FlatList, StyleSheet, ActivityIndicator, Dimensions, ScrollView } from "react-native";
 
 export default function OrderQueuePage({ navigation }) {
   const [orders, setOrders] = useState([]);
@@ -59,6 +59,60 @@ export default function OrderQueuePage({ navigation }) {
               { name: "Nachos", quantity: 1, details: ["Extra cheese"] },
             ],
           },
+          {
+            table: 6,
+            dueText: "15 mins",
+            items: [
+              { name: "Tacos", quantity: 3, details: ["Spicy", "No onions"] },
+              { name: "Nachos", quantity: 1, details: ["Extra cheese"] },
+            ],
+          },{
+            table: 7,
+            dueText: "15 mins",
+            items: [
+              { name: "Tacos", quantity: 3, details: ["Spicy", "No onions"] },
+              { name: "Nachos", quantity: 1, details: ["Extra cheese"] },
+            ],
+          },{
+            table: 8,
+            dueText: "15 mins",
+            items: [
+              { name: "Tacos", quantity: 3, details: ["Spicy", "No onions"] },
+              { name: "Nachos", quantity: 1, details: ["Extra cheese"] },
+            ],
+          },
+          {
+            table: 9,
+            dueText: "15 mins",
+            items: [
+              { name: "Tacos", quantity: 3, details: ["Spicy", "No onions"] },
+              { name: "Nachos", quantity: 1, details: ["Extra cheese"] },
+            ],
+          },
+          {
+            table: 10,
+            dueText: "15 mins",
+            items: [
+              { name: "Tacos", quantity: 3, details: ["Spicy", "No onions"] },
+              { name: "Nachos", quantity: 1, details: ["Extra cheese"] },
+            ],
+          },
+          {
+            table: 11,
+            dueText: "15 mins",
+            items: [
+              { name: "Tacos", quantity: 3, details: ["Spicy", "No onions"] },
+              { name: "Nachos", quantity: 1, details: ["Extra cheese"] },
+            ],
+          },
+        //   {
+        //     table: 12,
+        //     dueText: "15 mins",
+        //     items: [
+        //       { name: "Tacos", quantity: 3, details: ["Spicy", "No onions"] },
+        //       { name: "Nachos", quantity: 1, details: ["Extra cheese"] },
+        //     ],
+        //   },
         ]);
       }, 2000);
     };
@@ -91,29 +145,37 @@ export default function OrderQueuePage({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.titleContainer}>
-        <Text style={styles.title}>Orders Queue</Text>
-      </View>
-      {loading ? (
-        <ActivityIndicator size="large" color="#007bff" />
-      ) : orders.length === 0 ? (
-        <Text style={styles.noOrdersText}>No orders in queue</Text>
-      ) : (
-        <FlatList
-          data={orders}
-          renderItem={renderOrder}
-          keyExtractor={(item, index) => index.toString()}
-          numColumns={4}  
-          contentContainerStyle={styles.listContent}
-          columnWrapperStyle={styles.columnWrapperStyle} 
-        />
-      )}
-      <Text style={styles.copyrightText}>Powered by Spot Inc.</Text>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>Orders Queue</Text>
+        </View>
+        {loading ? (
+          <ActivityIndicator size="large" color="#007bff" />
+        ) : orders.length === 0 ? (
+          <Text style={styles.noOrdersText}>No orders in queue</Text>
+        ) : (
+          <FlatList
+            data={orders}
+            renderItem={renderOrder}
+            keyExtractor={(item, index) => index.toString()}
+            numColumns={4}
+            contentContainerStyle={styles.listContent}
+            columnWrapperStyle={styles.columnWrapperStyle}
+            showsVerticalScrollIndicator={true}
+            style={{ flex: 1 }}
+          />
+        )}
+        <Text style={styles.copyrightText}>Powered by Spot Inc.</Text>
+      </ScrollView>
     </SafeAreaView>
   );
+  
 }
 
 const styles = StyleSheet.create({
+    flatList: {
+        flex: 1,
+        },
   container: {
     flex: 1,
     backgroundColor: "#f8f9fa",
@@ -134,9 +196,12 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 16,
+    paddingHorizontal: 8,
+    flexWrap: "wrap",
   },
   columnWrapperStyle: {
     justifyContent: "space-between", 
+    marginVertical: 8,
   },
   orderCard: {
     backgroundColor: "#fff",
@@ -204,12 +269,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   copyrightText: {
-    color: '#24a45c',
+    textAlign: "center",
     fontSize: 14,
-    marginTop: 20,
-    position: 'absolute',
-    bottom: 0,
-    marginBottom: 10,
-    padding: 5,
+    color: "#24a45c",
+    marginTop: 16,
+    marginBottom: 8,
   },
 });
