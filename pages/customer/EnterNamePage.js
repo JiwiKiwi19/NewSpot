@@ -11,7 +11,7 @@ import { LogBox } from "react-native";
 export default function EnterNamePage({ navigation }) {
 
     const [clubType, setClubType] = useState(0);
-    const clubNames = ['Cactus', 'Penguin', 'Mango', 'Skibidi'];
+    const clubNames = ['Cactus🌵', 'Penguin🐧', 'Mango🥭', 'Skibidi👽'];
 
     const [tableNumber, setTableNumber] = useState(0);
     const tableNumbers = Array.from({ length: 100 }, (_, i) => (i + 1).toString());
