@@ -20,10 +20,7 @@ export default function OrderQueuePage({ navigation }) {
           {
             table: 1,
             dueText: "10 mins",
-            items: [
-              { name: "Burger", quantity: 2, details: ["No pickles", "Extra cheese"] },
-              { name: "Fries", quantity: 1, details: ["Large"] },
-            ],
+            items: [{ name: "Burger", quantity: 2, details: ["No pickles", "Extra cheese"] }],
           },
           {
             table: 2,
@@ -33,12 +30,7 @@ export default function OrderQueuePage({ navigation }) {
           {
             table: 3,
             dueText: "5:35 PM",
-            items: [{ name: "Salad", quantity: 1, details: ["No dressing"] }],
-          },
-          {
-            table: 4,
-            dueText: "5:35 PM",
-            items: [{ name: "Salad", quantity: 1, details: ["No dressing"] }],
+            items: [],
           },
         ]);
       }, 2000);
@@ -86,7 +78,7 @@ export default function OrderQueuePage({ navigation }) {
           keyExtractor={(item, index) => index.toString()}
           numColumns={numColumns}
           contentContainerStyle={styles.listContent}
-          columnWrapperStyle={numColumns > 1 ? styles.columnWrapperStyle : null}
+          columnWrapperStyle={numColumns > 1 ? styles.columnWrapperStyle : null} // Conditionally apply
           showsVerticalScrollIndicator={false}
         />
       )}
