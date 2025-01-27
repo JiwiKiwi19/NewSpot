@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { SafeAreaView, View, Text, FlatList, StyleSheet, ActivityIndicator, Dimensions, Platform } from "react-native";
+import { BREAKPOINTS, COLUMNS } from "./config";
 
 export default function OrderQueuePage({ navigation }) {
   const [orders, setOrders] = useState([]);
@@ -8,7 +9,16 @@ export default function OrderQueuePage({ navigation }) {
   const { width } = Dimensions.get("window");
 
   // Determine the number of columns based on platform and screen width
-  const numColumns = Platform.OS === "web" ? (width > 1200 ? 4 : width > 800 ? 3 : 2) : (width > 600 ? 2 : 1);
+  const numColumns =
+    Platform.OS === "web"
+      ? width > BREAKPOINTS.webLarge
+        ? COLUMNS.webLarge
+        : width > BREAKPOINTS.webMedium
+        ? COLUMNS.webMedium
+        : COLUMNS.webSmall
+      : width > BREAKPOINTS.mobile
+      ? COLUMNS.tablet
+      : COLUMNS.mobile;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -16,7 +26,7 @@ export default function OrderQueuePage({ navigation }) {
       setTimeout(() => {
         setLoading(false);
         setOrders([
-          // Sample data
+          // Mock data
           {
             table: 1,
             dueText: "10 mins",
@@ -29,6 +39,11 @@ export default function OrderQueuePage({ navigation }) {
           },
           {
             table: 3,
+            dueText: "5:35 PM",
+            items: [],
+          },
+          {
+            table: 4,
             dueText: "5:35 PM",
             items: [],
           },
@@ -119,6 +134,7 @@ const styles = StyleSheet.create({
     padding: 1,
     borderRadius: 10,
     marginVertical: 8,
+    marginHorizontal: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
