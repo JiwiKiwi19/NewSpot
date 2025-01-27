@@ -108,15 +108,17 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 16,
+    paddingHorizontal: 8,
   },
   columnWrapperStyle: {
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginVertical: 8,
   },
   orderCard: {
     backgroundColor: "#fff",
-    padding: 16,
+    padding: 1,
     borderRadius: 10,
+    marginVertical: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -147,6 +149,7 @@ const styles = StyleSheet.create({
   },
   itemRow: {
     marginBottom: 8,
+    paddingHorizontal: 12,
   },
   foodName: {
     fontSize: 16,
