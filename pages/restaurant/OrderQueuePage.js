@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { SafeAreaView, View, Text, FlatList, StyleSheet, ActivityIndicator, Dimensions, ScrollView } from "react-native";
+import { SafeAreaView, View, Text, FlatList, StyleSheet, ActivityIndicator, Dimensions, Platform } from "react-native";
 
 export default function OrderQueuePage({ navigation }) {
   const [orders, setOrders] = useState([]);
@@ -9,15 +9,17 @@ export default function OrderQueuePage({ navigation }) {
     setOrders(prevOrders => [...prevOrders, newTable]);
   };
   
-
   const { width } = Dimensions.get("window"); 
+
+  // Dynamically decide how many columns should be displayed
+  const numColumns = Platform.OS === 'web' ? (width > 1200 ? 4 : 3) : (width > 600 ? 4 : 2);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setTimeout(() => {
         setLoading(false);
-        // Mock data for testing purposes
+        // Just mock data for testing purposes
         setOrders([
           {
             table: 1,
@@ -31,8 +33,8 @@ export default function OrderQueuePage({ navigation }) {
             table: 2,
             dueText: "35 mins",
             items: [
-            //   { name: "Schezhuan Lettuce Wr.", quantity: 1, details: ["Pepperoni", "Olives"] },
-            //   { name: "Salad", quantity: 1, details: ["No dressing"] },
+              { name: "Schezhuan Lettuce Wr.", quantity: 1, details: ["Pepperoni", "Olives"] },
+              { name: "Salad", quantity: 1, details: ["No dressing"] },
             ],
           },
           {
@@ -63,56 +65,40 @@ export default function OrderQueuePage({ navigation }) {
             table: 6,
             dueText: "15 mins",
             items: [
-              { name: "Tacos", quantity: 3, details: ["Spicy", "No onions"] },
-              { name: "Nachos", quantity: 1, details: ["Extra cheese"] },
             ],
-          },{
+          },
+          {
             table: 7,
-            dueText: "15 mins",
+            dueText: "10 mins",
             items: [
-              { name: "Tacos", quantity: 3, details: ["Spicy", "No onions"] },
-              { name: "Nachos", quantity: 1, details: ["Extra cheese"] },
+              { name: "Burger", quantity: 2, details: ["No pickles", "Extra cheese"] },
+              { name: "Fries", quantity: 1, details: ["Large"] },
             ],
-          },{
+          },
+          {
             table: 8,
-            dueText: "15 mins",
+            dueText: "10 mins",
             items: [
-              { name: "Tacos", quantity: 3, details: ["Spicy", "No onions"] },
-              { name: "Nachos", quantity: 1, details: ["Extra cheese"] },
+              { name: "Burger", quantity: 2, details: ["No pickles", "Extra cheese"] },
+              { name: "Fries", quantity: 1, details: ["Large"] },
             ],
           },
           {
             table: 9,
-            dueText: "15 mins",
+            dueText: "10 mins",
             items: [
-              { name: "Tacos", quantity: 3, details: ["Spicy", "No onions"] },
-              { name: "Nachos", quantity: 1, details: ["Extra cheese"] },
+              { name: "Burger", quantity: 2, details: ["No pickles", "Extra cheese"] },
+              { name: "Fries", quantity: 1, details: ["Large"] },
             ],
           },
           {
             table: 10,
-            dueText: "15 mins",
+            dueText: "10 mins",
             items: [
-              { name: "Tacos", quantity: 3, details: ["Spicy", "No onions"] },
-              { name: "Nachos", quantity: 1, details: ["Extra cheese"] },
+              { name: "Burger", quantity: 2, details: ["No pickles", "Extra cheese"] },
+              { name: "Fries", quantity: 1, details: ["Large"] },
             ],
           },
-          {
-            table: 11,
-            dueText: "15 mins",
-            items: [
-              { name: "Tacos", quantity: 3, details: ["Spicy", "No onions"] },
-              { name: "Nachos", quantity: 1, details: ["Extra cheese"] },
-            ],
-          },
-        //   {
-        //     table: 12,
-        //     dueText: "15 mins",
-        //     items: [
-        //       { name: "Tacos", quantity: 3, details: ["Spicy", "No onions"] },
-        //       { name: "Nachos", quantity: 1, details: ["Extra cheese"] },
-        //     ],
-        //   },
         ]);
       }, 2000);
     };
@@ -145,12 +131,11 @@ export default function OrderQueuePage({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View style={styles.titleContainer}>
           <Text style={styles.title}>Orders Queue</Text>
         </View>
         {loading ? (
-          <ActivityIndicator size="large" color="#007bff" />
+          <ActivityIndicator size="large" color="#007bff" style={styles.loadingIndicator} />
         ) : orders.length === 0 ? (
           <Text style={styles.noOrdersText}>No orders in queue</Text>
         ) : (
@@ -158,24 +143,18 @@ export default function OrderQueuePage({ navigation }) {
             data={orders}
             renderItem={renderOrder}
             keyExtractor={(item, index) => index.toString()}
-            numColumns={4}
+            numColumns={numColumns}
             contentContainerStyle={styles.listContent}
             columnWrapperStyle={styles.columnWrapperStyle}
-            showsVerticalScrollIndicator={true}
-            style={{ flex: 1 }}
+            showsVerticalScrollIndicator={true}            
           />
         )}
         <Text style={styles.copyrightText}>Powered by Spot Inc.</Text>
-      </ScrollView>
     </SafeAreaView>
   );
-  
 }
 
 const styles = StyleSheet.create({
-    flatList: {
-        flex: 1,
-        },
   container: {
     flex: 1,
     backgroundColor: "#f8f9fa",
@@ -207,8 +186,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 1, 
     marginVertical: 12,
-    marginHorizontal: 10, 
-    width: (Dimensions.get("window").width - 48 - 40) / 4,
+    marginHorizontal: 10,
+    width: (Dimensions.get("window").width - 48 - 40) / 4,  // Adjust width dynamically based on number of columns
     justifyContent: "space-between",
     borderRadius: 10,
     shadowColor: "#000",
@@ -217,7 +196,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 10,
   },
-  
   headerContainer: {
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -240,7 +218,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#dee2e6",
     paddingTop: 8,
     width: "100%",
-    minHeight:250,
+    minHeight: 250,
   },
   itemRow: {
     marginBottom: 8,
@@ -252,11 +230,6 @@ const styles = StyleSheet.create({
     color: "#212529",
     marginBottom: 4,
     flexShrink: 1,
-  },
-  quantityText: {
-    fontSize: 14,
-    fontWeight: "normal",
-    color: "#6c757d",
   },
   foodDetails: {
     fontSize: 14,
@@ -275,4 +248,8 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 8,
   },
+  loadingIndicator: {
+    marginTop: 30,
+  },
 });
+
