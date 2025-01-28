@@ -2,7 +2,7 @@
 export const BREAKPOINTS = {
     webLarge: 1200,
     webMedium: 800,
-    mobile: 600,
+    mobile: 500,
   };
   
   export const COLUMNS = {

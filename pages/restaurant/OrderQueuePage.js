@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { SafeAreaView, View, Text, FlatList, StyleSheet, ActivityIndicator, Dimensions, Platform } from "react-native";
+import { SafeAreaView, View, Text, FlatList, StyleSheet, ActivityIndicator, Dimensions, Platform, TouchableOpacity } from "react-native";
 import { BREAKPOINTS, COLUMNS } from "./config";
-import { ScrollView } from "react-native-gesture-handler";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function OrderQueuePage({ navigation }) {
   const [orders, setOrders] = useState([]);
@@ -31,8 +31,11 @@ export default function OrderQueuePage({ navigation }) {
           {
             table: 1,
             dueText: "10 mins",
-            items: [
+            items: [ 
               { name: "Burger", quantity: 2, details: ["No pickles", "Extra cheese"] },
+              { name: "Fries", quantity: 1, details: [] },
+              { name: "Fries", quantity: 1, details: [] },
+              { name: "Fries", quantity: 1, details: [] },
               { name: "Fries", quantity: 1, details: [] },
               { name: "Fries", quantity: 1, details: [] },
               { name: "Fries", quantity: 1, details: [] },
@@ -55,6 +58,27 @@ export default function OrderQueuePage({ navigation }) {
             dueText: "5:35 PM",
             items: [],
           },
+          {
+            table: 4,
+            dueText: "5:35 PM",
+            items: [],
+          },
+          {
+            table: 4,
+            dueText: "5:35 PM",
+            items: [],
+          },
+          {
+            table: 4,
+            dueText: "5:35 PM",
+            items: [],
+          },
+          {
+            table: 4,
+            dueText: "5:35 PM",
+            items: [],
+          },
+          
         ]);
       }, 2000);
     };
@@ -64,33 +88,43 @@ export default function OrderQueuePage({ navigation }) {
 
   const renderOrder = ({ item }) => {
     const headerBackgroundColor = item.items.length === 0 ? "#323e52" : "#24a45c";
-
+  
     return (
       <View style={[styles.orderCard, { width: `${100 / numColumns - 5}%` }]}>
         <View style={[styles.headerContainer, { backgroundColor: headerBackgroundColor }]}>
           <Text style={styles.tableText}>Table {item.table}</Text>
           <Text style={styles.dueText}>Due: {item.dueText}</Text>
         </View>
-        <View style={styles.itemsContainer}>
-          <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.itemsContainer}> 
             {item.items.map((food, index) => (
               <View key={index} style={styles.itemRow}>
                 <Text style={styles.foodName}>
-                  x{food.quantity} {food.name}
+                  {food.quantity}  {food.name}
                 </Text>
                 <Text style={styles.foodDetails}>{food.details.join(", ")}</Text>
               </View>
             ))}
-          </ScrollView>
+        </View>
+        <View style={styles.actionButtons}>
+          <TouchableOpacity style={styles.completeButton} onPress={() => markAsCompleted(item.id)}>
+            <Text style={styles.completeButtonText}>Mark Completed</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.cancelButton} onPress={() => cancelOrder(item.id)}>
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
   };
+  
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.titleContainer}>
         <Text style={styles.title}>Orders Queue</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ transform: [{ rotate: '180deg' }] }}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
       </View>
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" style={styles.loadingIndicator} />
@@ -103,7 +137,7 @@ export default function OrderQueuePage({ navigation }) {
           keyExtractor={(item, index) => index.toString()}
           numColumns={numColumns}
           contentContainerStyle={styles.listContent}
-          columnWrapperStyle={numColumns > 1 ? styles.columnWrapperStyle : null} // Conditionally apply
+          columnWrapperStyle={numColumns > 1 ? styles.columnWrapperStyle : null} 
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -120,11 +154,18 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     backgroundColor: "black",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
     marginBottom: 16,
+  },
+  backButton:{
+    padding: 8,
+    marginLeft: "auto",
   },
   title: {
     fontSize: 24,
@@ -136,26 +177,60 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   columnWrapperStyle: {
-    justifyContent: "space-between",
-    marginVertical: 8,
+    justifyContent: "flex-start",
+    alignItems: "stretch",
+    gap: 16,
   },
   orderCard: {
     backgroundColor: "#fff",
-    padding: 1,
     borderRadius: 10,
-    marginVertical: 8,
-    marginHorizontal: 8,
-    shadowColor: "#000",
+    marginBottom: 16,
+    shadowColor: "black",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 10,
+    flex: 1,
+    minWidth: 250,
+    maxWidth: 250,
+    overflow: 'hidden', 
+    alignSelf: "flex-start",
+    maxWidth: Platform.OS === "web" ? "calc(100% / 4 - 10px)" : "100%",
+  },
+  completeButton: {
+    borderWidth: 2,
+    borderColor: "#24a45c", 
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    marginHorizontal: 8,
+  },
+  cancelButton: {
+    borderWidth: 2,
+    borderColor: "#e74c3c", 
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    marginHorizontal: 8,
+  },
+  completeButtonText: {
+    color: "#24a45c", 
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  cancelButtonText: {
+    color: "#e74c3c", 
+    fontSize: 14,
+    fontWeight: "bold",
   },
   headerContainer: {
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
+    overflow: "hidden",
   },
   tableText: {
     fontSize: 18,
@@ -171,8 +246,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#dee2e6",
     paddingTop: 8,
-    height: 200,
-    overflow: "hidden",
+    flex: 1,
   },
   itemRow: {
     marginBottom: 8,
