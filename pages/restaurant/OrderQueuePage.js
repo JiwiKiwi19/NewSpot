@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { SafeAreaView, View, Text, FlatList, StyleSheet, ActivityIndicator, Dimensions, Platform } from "react-native";
 import { BREAKPOINTS, COLUMNS } from "./config";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function OrderQueuePage({ navigation }) {
   const [orders, setOrders] = useState([]);
@@ -30,7 +31,14 @@ export default function OrderQueuePage({ navigation }) {
           {
             table: 1,
             dueText: "10 mins",
-            items: [{ name: "Burger", quantity: 2, details: ["No pickles", "Extra cheese"] }],
+            items: [
+              { name: "Burger", quantity: 2, details: ["No pickles", "Extra cheese"] },
+              { name: "Fries", quantity: 1, details: [] },
+              { name: "Fries", quantity: 1, details: [] },
+              { name: "Fries", quantity: 1, details: [] },
+              { name: "Fries", quantity: 1, details: [] },
+              { name: "Fries", quantity: 1, details: [] },
+            ],
           },
           {
             table: 2,
@@ -64,14 +72,16 @@ export default function OrderQueuePage({ navigation }) {
           <Text style={styles.dueText}>Due: {item.dueText}</Text>
         </View>
         <View style={styles.itemsContainer}>
-          {item.items.map((food, index) => (
-            <View key={index} style={styles.itemRow}>
-              <Text style={styles.foodName}>
-                x{food.quantity} {food.name}
-              </Text>
-              <Text style={styles.foodDetails}>{food.details.join(", ")}</Text>
-            </View>
-          ))}
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            {item.items.map((food, index) => (
+              <View key={index} style={styles.itemRow}>
+                <Text style={styles.foodName}>
+                  x{food.quantity} {food.name}
+                </Text>
+                <Text style={styles.foodDetails}>{food.details.join(", ")}</Text>
+              </View>
+            ))}
+          </ScrollView>
         </View>
       </View>
     );
@@ -161,7 +171,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#dee2e6",
     paddingTop: 8,
-    minHeight: 200,
+    height: 200,
+    overflow: "hidden",
   },
   itemRow: {
     marginBottom: 8,
