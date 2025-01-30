@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { SafeAreaView, View, Text, FlatList, StyleSheet, ActivityIndicator, Dimensions, Platform, TouchableOpacity } from "react-native";
 import { BREAKPOINTS, COLUMNS } from "./config";
 import { Ionicons } from "@expo/vector-icons";
+import supabase from "../../config/supabaseClient";
 
 export default function OrderQueuePage({ navigation }) {
+  console.log(supabase)
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,7 +35,6 @@ export default function OrderQueuePage({ navigation }) {
             dueText: "10 mins",
             items: [ 
               { name: "Burger", quantity: 2, details: ["No pickles", "Extra cheese"] },
-              { name: "Fries", quantity: 1, details: [] },
               { name: "Fries", quantity: 1, details: [] },
               { name: "Fries", quantity: 1, details: [] },
               { name: "Fries", quantity: 1, details: [] },
@@ -87,10 +88,10 @@ export default function OrderQueuePage({ navigation }) {
   }, []);
 
   const renderOrder = ({ item }) => {
-    const headerBackgroundColor = item.items.length === 0 ? "#323e52" : "#24a45c";
+    const headerBackgroundColor = item.items.length === 0 ? "#323e52" : "#459690";
   
     return (
-      <View style={[styles.orderCard, { width: `${100 / numColumns - 5}%` }]}>
+      <View style={[styles.orderCard, { width: `${100 / numColumns}%` }]}>
         <View style={[styles.headerContainer, { backgroundColor: headerBackgroundColor }]}>
           <Text style={styles.tableText}>Table {item.table}</Text>
           <Text style={styles.dueText}>Due: {item.dueText}</Text>
@@ -106,11 +107,11 @@ export default function OrderQueuePage({ navigation }) {
             ))}
         </View>
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.completeButton} onPress={() => markAsCompleted(item.id)}>
-            <Text style={styles.completeButtonText}>Mark Completed</Text>
+          <TouchableOpacity style={[styles.completeButton, {backgroundColor: '#24a45c'}]} onPress={() => markAsCompleted(item.id)}>
+            <Ionicons name="checkmark" size={24} color="#fff" strokeWidth={10} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.cancelButton} onPress={() => cancelOrder(item.id)}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+          <TouchableOpacity style={[styles.cancelButton, {backgroundColor: '#e74c3c'}]} onPress={() => cancelOrder(item.id)}>
+            <Ionicons name="close" size={24} color="#fff" strokeWidth={10} />
           </TouchableOpacity>
         </View>
       </View>
@@ -197,6 +198,12 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     maxWidth: Platform.OS === "web" ? "calc(100% / 4 - 10px)" : "100%",
   },
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 8,
+  },
   completeButton: {
     borderWidth: 2,
     borderColor: "#24a45c", 
@@ -205,6 +212,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: "center",
     marginHorizontal: 8,
+    width: '35%',
   },
   cancelButton: {
     borderWidth: 2,
@@ -214,6 +222,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: "center",
     marginHorizontal: 8,
+    width: '35%',
   },
   completeButtonText: {
     color: "#24a45c", 
