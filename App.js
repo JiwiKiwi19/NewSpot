@@ -12,6 +12,7 @@ import CustomerMenuPage from './pages/customer/CustomerMenuPage.js';
 
 // Restaurant Pages
 import OrderQueuePage from './pages/restaurant/OrderQueuePage.js'
+import tablePage from './pages/restaurant/tablePage.js'
 
 
 const MyTheme = {
@@ -26,12 +27,13 @@ export default function App() {
   return (
     <NavigationContainer theme={MyTheme}>
       <Navigator 
-      initialRouteName='OrderQueuePage'
+      initialRouteName='tablePage'
       screenOptions={{
         headerShown: false, // headerMode="none" is deprecated so don't use that
       }}>
         {/* Restaurant Pages */}
         <Screen name="OrderQueuePage" component={OrderQueuePage} />
+        <Screen name="tablePage" component={tablePage} />
 
         {/* Customer Pages */}
         <Screen name="EnterNamePage" component={EnterNamePage} />

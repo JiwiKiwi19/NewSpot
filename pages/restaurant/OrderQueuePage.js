@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { SafeAreaView, View, Text, FlatList, StyleSheet, ActivityIndicator, Dimensions, Platform, TouchableOpacity } from "react-native";
-import { BREAKPOINTS, COLUMNS } from "./config";
+import { BREAKPOINTS, COLUMNS } from "./screenSize";
 import { Ionicons } from "@expo/vector-icons";
 import supabase from "../../config/supabaseClient";
 
@@ -138,7 +138,7 @@ export default function OrderQueuePage({ navigation }) {
           keyExtractor={(item, index) => index.toString()}
           numColumns={numColumns}
           contentContainerStyle={styles.listContent}
-          columnWrapperStyle={numColumns > 1 ? styles.columnWrapperStyle : null} 
+          columnWrapperStyle={numColumns > 1 ? { justifyContent: "flex-start", alignItems: "flex-start", gap: 16 } : null} 
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -196,6 +196,7 @@ const styles = StyleSheet.create({
     maxWidth: 250,
     overflow: 'hidden', 
     alignSelf: "flex-start",
+    flexGrow: 1,
     maxWidth: Platform.OS === "web" ? "calc(100% / 4 - 10px)" : "100%",
   },
   actionButtons: {
@@ -256,6 +257,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#dee2e6",
     paddingTop: 8,
     flex: 1,
+    alignSelf: 'flex-start',
   },
   itemRow: {
     marginBottom: 8,
