@@ -27,7 +27,7 @@ export default function App() {
   return (
     <NavigationContainer theme={MyTheme}>
       <Navigator 
-      initialRouteName='tablePage'
+      initialRouteName='OrderQueuePage'
       screenOptions={{
         headerShown: false, // headerMode="none" is deprecated so don't use that
       }}>

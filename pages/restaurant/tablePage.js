@@ -16,10 +16,9 @@ export default function TablePage({ navigation }) {
   const COLORS = ["#4CAF50", "#2196F3", "#FF9800", "#E91E63", "#9C27B0"];
   const GREY_COLOR = "#B0B0B0";
   const [tables, setTables] = useState([]);
-  const [loading, setLoading] = useState(true); // Initialize loading state
+  const [loading, setLoading] = useState(true); 
 
   useEffect(() => {
-    // Simulate fetching table data
     setTimeout(() => {
       setTables([
         { id: 1, name: "Table 1", people: 4 },
