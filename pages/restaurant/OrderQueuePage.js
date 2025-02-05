@@ -5,13 +5,11 @@ import { Ionicons } from "@expo/vector-icons";
 import supabase from "../../config/supabaseClient";
 
 export default function OrderQueuePage({ navigation }) {
-  console.log(supabase)
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const { width } = Dimensions.get("window");
 
-  // Determine the number of columns based on platform and screen width
   const numColumns =
     Platform.OS === "web"
       ? width > BREAKPOINTS.webLarge
@@ -24,106 +22,81 @@ export default function OrderQueuePage({ navigation }) {
       : COLUMNS.mobile;
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setTimeout(() => {
-        setLoading(false);
-        setOrders([
-          // Mock data
-          {
-            table: 1,
-            dueText: "10 mins",
-            items: [ 
-              { name: "Burger", quantity: 2, details: ["No pickles", "Extra cheese"] },
-              { name: "Fries", quantity: 1, details: [] },
-              { name: "Fries", quantity: 1, details: [] },
-              { name: "Fries", quantity: 1, details: [] },
-              { name: "Fries", quantity: 1, details: [] },
-              { name: "Fries", quantity: 1, details: [] },
-              { name: "Fries", quantity: 1, details: [] },
-              { name: "Fries", quantity: 1, details: [] },
-            ],
-          },
-          {
-            table: 2,
-            dueText: "35 mins",
-            items: [{ name: "Pizza", quantity: 1, details: ["Extra cheese"] }],
-          },
-          {
-            table: 3,
-            dueText: "5:35 PM",
-            items: [],
-          },
-          {
-            table: 4,
-            dueText: "5:35 PM",
-            items: [],
-          },
-          {
-            table: 4,
-            dueText: "5:35 PM",
-            items: [],
-          },
-          {
-            table: 4,
-            dueText: "5:35 PM",
-            items: [],
-          },
-          {
-            table: 4,
-            dueText: "5:35 PM",
-            items: [],
-          },
-          {
-            table: 4,
-            dueText: "5:35 PM",
-            items: [],
-          },
-          
-        ]);
-      }, 2000);
-    };
-
-    fetchData();
+    fetchOrders();
   }, []);
 
-  const renderOrder = ({ item }) => {
-    const headerBackgroundColor = item.items.length === 0 ? "#323e52" : "#459690";
-  
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
+      if (error) {
+        throw error;
+      }
+      console.log("Fetched Orders:", data); // Test Purpose
+      setOrders(data || []);
+    } catch (error) {
+      console.error("Error fetching orders:", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const markAsCompleted = async (orderId) => {
+    try {
+      const { error } = await supabase.from("orders").update({ status: "completed" }).eq("id", orderId);
+      if (error) throw error;
+      fetchOrders();
+    } catch (error) {
+      console.error("Error updating order", error.message);
+    }
+  };
+
+  const cancelOrder = async (orderId) => {
+    try {
+      const { error } = await supabase.from("orders").update({ status: "cancelled" }).eq("id", orderId);
+      if (error) throw error;
+      fetchOrders();
+    } catch (error) {
+      console.error("Error canceling order", error.message);
+    }
+  };
+
+  const renderOrder = ({ item: order }) => {
+    console.log("Rendering Order:", order); // Test Purpose
+    const headerBackgroundColor = order.quantity === 0 ? "#323e52" : "#459690";
+
     return (
       <View style={[styles.orderCard, { width: `${100 / numColumns}%` }]}>
         <View style={[styles.headerContainer, { backgroundColor: headerBackgroundColor }]}>
-          <Text style={styles.tableText}>Table {item.table}</Text>
-          <Text style={styles.dueText}>Due: {item.dueText}</Text>
+          <Text style={styles.tableText}>Table {order.table}</Text>
+          <Text style={styles.dueText}>Due: {order.due_text}</Text>
         </View>
-        <View style={styles.itemsContainer}> 
-            {item.items.map((food, index) => (
-              <View key={index} style={styles.itemRow}>
-                <Text style={styles.foodName}>
-                  {food.quantity}  {food.name}
-                </Text>
-                <Text style={styles.foodDetails}>{food.details.join(", ")}</Text>
-              </View>
-            ))}
+        <View style={styles.itemsContainer}>
+          {/* Render food details directly from the columns */}
+          <View key={order.id} style={styles.itemRow}>
+            <Text style={styles.foodName}>
+              {order.quantity} {order.food_name}
+            </Text>
+            <Text style={styles.foodDetails}>{order.details}</Text>
+          </View>
         </View>
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={[styles.completeButton, {backgroundColor: '#24a45c'}]} onPress={() => markAsCompleted(item.id)}>
-            <Ionicons name="checkmark" size={24} color="#fff" strokeWidth={10} />
+          <TouchableOpacity style={[styles.completeButton, { backgroundColor: "#24a45c" }]} onPress={() => markAsCompleted(order.id)}>
+            <Ionicons name="checkmark" size={24} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.cancelButton, {backgroundColor: '#e74c3c'}]} onPress={() => cancelOrder(item.id)}>
-            <Ionicons name="close" size={24} color="#fff" strokeWidth={10} />
+          <TouchableOpacity style={[styles.cancelButton, { backgroundColor: "#e74c3c" }]} onPress={() => cancelOrder(order.id)}>
+            <Ionicons name="close" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
     );
   };
-  
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.titleContainer}>
         <Text style={styles.title}>Orders Queue</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ transform: [{ rotate: '180deg' }] }}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ transform: [{ rotate: "180deg" }] }}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -135,10 +108,10 @@ export default function OrderQueuePage({ navigation }) {
         <FlatList
           data={orders}
           renderItem={renderOrder}
-          keyExtractor={(item, index) => index.toString()}
+          keyExtractor={(order) => order.id}
           numColumns={numColumns}
           contentContainerStyle={styles.listContent}
-          columnWrapperStyle={numColumns > 1 ? { justifyContent: "flex-start", alignItems: "flex-start", gap: 16 } : null} 
+          columnWrapperStyle={numColumns > 1 ? { justifyContent: "flex-start", alignItems: "flex-start", gap: 16 } : null}
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -155,18 +128,14 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     backgroundColor: "black",
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
     marginBottom: 16,
-  },
-  backButton:{
-    padding: 8,
-    marginLeft: "auto",
   },
   title: {
     fontSize: 24,
@@ -176,11 +145,6 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 16,
     paddingHorizontal: 8,
-  },
-  columnWrapperStyle: {
-    justifyContent: "flex-start",
-    alignItems: "stretch",
-    gap: 16,
   },
   orderCard: {
     backgroundColor: "#fff",
@@ -194,7 +158,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 250,
     maxWidth: 250,
-    overflow: 'hidden', 
+    overflow: "hidden",
     alignSelf: "flex-start",
     flexGrow: 1,
     maxWidth: Platform.OS === "web" ? "calc(100% / 4 - 10px)" : "100%",
@@ -207,33 +171,23 @@ const styles = StyleSheet.create({
   },
   completeButton: {
     borderWidth: 2,
-    borderColor: "#24a45c", 
+    borderColor: "#24a45c",
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
     alignItems: "center",
     marginHorizontal: 8,
-    width: '35%',
+    width: "35%",
   },
   cancelButton: {
     borderWidth: 2,
-    borderColor: "#e74c3c", 
+    borderColor: "#e74c3c",
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
     alignItems: "center",
     marginHorizontal: 8,
-    width: '35%',
-  },
-  completeButtonText: {
-    color: "#24a45c", 
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  cancelButtonText: {
-    color: "#e74c3c", 
-    fontSize: 14,
-    fontWeight: "bold",
+    width: "35%",
   },
   headerContainer: {
     paddingVertical: 8,
@@ -257,20 +211,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#dee2e6",
     paddingTop: 8,
     flex: 1,
-    alignSelf: 'flex-start',
-  },
-  itemRow: {
-    marginBottom: 8,
-    paddingHorizontal: 12,
-  },
-  foodName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#212529",
-  },
-  foodDetails: {
-    fontSize: 14,
-    color: "#6c757d",
+    alignSelf: "flex-start",
   },
   noOrdersText: {
     fontSize: 16,
@@ -287,4 +228,18 @@ const styles = StyleSheet.create({
   loadingIndicator: {
     marginTop: 30,
   },
+  itemRow: {
+    marginBottom: 8,
+    paddingHorizontal: 12,
+  },
+  foodName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#212529",
+  },
+  foodDetails: {
+    fontSize: 14,
+    color: "#6c757d",
+  },
 });
+
