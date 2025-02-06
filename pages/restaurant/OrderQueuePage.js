@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { SafeAreaView, View, Text, FlatList, StyleSheet, ActivityIndicator, Dimensions, Platform, TouchableOpacity } from "react-native";
+import { SafeAreaView, View, Text, FlatList, StyleSheet, ActivityIndicator, Dimensions, Platform, TouchableOpacity, Alert } from "react-native";
 import { BREAKPOINTS, COLUMNS } from "./screenSize";
 import { Ionicons } from "@expo/vector-icons";
 import supabase from "../../config/supabaseClient";
@@ -28,70 +28,137 @@ export default function OrderQueuePage({ navigation }) {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
-      if (error) {
-        throw error;
-      }
-      console.log("Fetched Orders:", data); // Test Purpose
-      setOrders(data || []);
+      const { data, error } = await supabase.from("orders").select("*").in("status", ["pending", "in-progress"]).order("created_at", { ascending: false });
+      if (error) throw error;
+  
+      // Group and validate orders by table with user ID constraint
+      const validGroupedOrders = validateOrdersForTables(data || []);
+      setOrders(validGroupedOrders);
     } catch (error) {
       console.error("Error fetching orders:", error.message);
     } finally {
       setLoading(false);
     }
   };
+  
+  const validateOrdersForTables = (orders) => {
+    const userIdToTableMap = new Map(); 
+    const validOrders = {};
+  
+    for (const order of orders) {
+      const { user_id, table_no } = order;
+  
+      // Skip if no user ID
+      if (!user_id) {
+        continue;
+      }
+  
+      // Checking duplicates
+      if (userIdToTableMap.has(user_id) && userIdToTableMap.get(user_id) !== table_no) {
+        console.error(`User ${user_id} is already assigned to Table ${userIdToTableMap.get(user_id)}. Skipping this order.`);
+        continue;
+      }
+  
+      userIdToTableMap.set(user_id, table_no);
+  
+      // Group orders by table number
+      if (!validOrders[table_no]) {
+        validOrders[table_no] = [];
+      }
+      validOrders[table_no].push(order);
+    }
+  
+    return Object.entries(validOrders);
+  };
 
-  const markAsCompleted = async (orderId) => {
+
+
+  const markAsCompleted = async (orderId, table_no) => {
     try {
       const { error } = await supabase.from("orders").update({ status: "completed" }).eq("id", orderId);
       if (error) throw error;
-      fetchOrders();
+  
+      // Remove the completed order from the state and ensure it's cleared when a new order comes in
+      setOrders((prevOrders) =>
+        prevOrders.map(([table, tableOrders]) => {
+          if (table === table_no) {
+            // Remove completed order from the table's orders
+            const updatedOrders = tableOrders.filter((order) => order.id !== orderId);
+            return [table, updatedOrders];
+          }
+          return [table, tableOrders];
+        })
+      );
     } catch (error) {
       console.error("Error updating order", error.message);
     }
   };
-
-  const cancelOrder = async (orderId) => {
+  
+  const cancelOrder = async (orderId, table_no) => {
     try {
       const { error } = await supabase.from("orders").update({ status: "cancelled" }).eq("id", orderId);
       if (error) throw error;
-      fetchOrders();
+  
+      // Remove the cancelled order from the state
+      setOrders((prevOrders) =>
+        prevOrders.map(([table, tableOrders]) => {
+          if (table === table_no) {
+            // Remove the cancelled order from the table's orders
+            const updatedOrders = tableOrders.filter((order) => order.id !== orderId);
+            
+            // If the table has no more orders, remove the table entirely
+            if (updatedOrders.length === 0) {
+              return null; // This will filter out the table from the state
+            }
+            return [table, updatedOrders];
+          }
+          return [table, tableOrders];
+        }).filter(Boolean) // Filter out null values (tables with no orders)
+      );
     } catch (error) {
       console.error("Error canceling order", error.message);
     }
   };
+  
 
-  const renderOrder = ({ item: order }) => {
-    console.log("Rendering Order:", order); // Test Purpose
-    const headerBackgroundColor = order.quantity === 0 ? "#323e52" : "#459690";
+const renderOrder = (table_no, tableOrders) => {
+  const headerBackgroundColor = tableOrders.every((order) => order.quantity === 0) ? "#323e52" : "#459690";
 
-    return (
-      <View style={[styles.orderCard, { width: `${100 / numColumns}%` }]}>
-        <View style={[styles.headerContainer, { backgroundColor: headerBackgroundColor }]}>
-          <Text style={styles.tableText}>Table {order.table}</Text>
-          <Text style={styles.dueText}>Due: {order.due_text}</Text>
-        </View>
-        <View style={styles.itemsContainer}>
-          {/* Render food details directly from the columns */}
+  return (
+    <View style={[styles.orderCard, { width: `${100 / numColumns}%` }]}>
+      <View style={[styles.headerContainer, { backgroundColor: headerBackgroundColor }]}>
+        <Text style={styles.tableText}>Table {table_no}</Text>
+        <Text style={styles.dueText}>Due: {tableOrders[0]?.due_text}</Text>
+      </View>
+      <View style={styles.itemsContainer}>
+        {tableOrders.map((order) => (
           <View key={order.id} style={styles.itemRow}>
             <Text style={styles.foodName}>
               {order.quantity} {order.food_name}
             </Text>
             <Text style={styles.foodDetails}>{order.details}</Text>
           </View>
-        </View>
-        <View style={styles.actionButtons}>
-          <TouchableOpacity style={[styles.completeButton, { backgroundColor: "#24a45c" }]} onPress={() => markAsCompleted(order.id)}>
-            <Ionicons name="checkmark" size={24} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.cancelButton, { backgroundColor: "#e74c3c" }]} onPress={() => cancelOrder(order.id)}>
-            <Ionicons name="close" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
+        ))}
       </View>
-    );
-  };
+      <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={[styles.completeButton, { backgroundColor: "#24a45c" }]}
+          onPress={() => markAsCompleted(tableOrders[0].id, table_no)}
+        >
+          <Ionicons name="checkmark" size={24} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.cancelButton, { backgroundColor: "#e74c3c" }]}
+          onPress={() => cancelOrder(tableOrders[0].id, table_no)}
+        >
+          <Ionicons name="close" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
 
+  
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.titleContainer}>
@@ -107,8 +174,11 @@ export default function OrderQueuePage({ navigation }) {
       ) : (
         <FlatList
           data={orders}
-          renderItem={renderOrder}
-          keyExtractor={(order) => order.id}
+          renderItem={({ item }) => {
+            const [table, tableOrders] = item;
+            return renderOrder(table, tableOrders);
+          }}
+          keyExtractor={(item) => `table-${item[0]}`}
           numColumns={numColumns}
           contentContainerStyle={styles.listContent}
           columnWrapperStyle={numColumns > 1 ? { justifyContent: "flex-start", alignItems: "flex-start", gap: 16 } : null}
@@ -242,4 +312,3 @@ const styles = StyleSheet.create({
     color: "#6c757d",
   },
 });
-
