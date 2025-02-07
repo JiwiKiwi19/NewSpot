@@ -49,11 +49,9 @@ export default function OrderQueuePage({ navigation }) {
       const { user_id, table_no } = order;
   
       // Skip if no user ID
-      if (!user_id) {
-        continue;
-      }
+      if (!user_id) continue;
   
-      // Checking duplicates
+      // Allow multiple orders for the same user at the same table
       if (userIdToTableMap.has(user_id) && userIdToTableMap.get(user_id) !== table_no) {
         console.error(`User ${user_id} is already assigned to Table ${userIdToTableMap.get(user_id)}. Skipping this order.`);
         continue;
@@ -65,11 +63,14 @@ export default function OrderQueuePage({ navigation }) {
       if (!validOrders[table_no]) {
         validOrders[table_no] = [];
       }
+  
+      // Append the order to the table's list
       validOrders[table_no].push(order);
     }
   
     return Object.entries(validOrders);
   };
+  
 
 
 
@@ -128,7 +129,7 @@ const renderOrder = (table_no, tableOrders) => {
     <View style={[styles.orderCard, { width: `${100 / numColumns}%` }]}>
       <View style={[styles.headerContainer, { backgroundColor: headerBackgroundColor }]}>
         <Text style={styles.tableText}>Table {table_no}</Text>
-        <Text style={styles.dueText}>Due: {tableOrders[0]?.due_text}</Text>
+        <Text style={styles.dueText}>Due: {tableOrders[0]?.due_time}</Text>
       </View>
       <View style={styles.itemsContainer}>
         {tableOrders.map((order) => (
