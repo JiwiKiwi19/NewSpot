@@ -46,12 +46,13 @@ export default function EnterNamePage({ navigation }) {
 
                 <Button 
                     style={[styles.confirmButton, nickname.length >= 3 ? styles.confirmButtonActive : {}]} 
-                    onPress={() => navigation.navigate('EnterNamePage')}
+                    onPress={() => nickname.length >= 3 ? navigation.navigate('CompleteOrderPage') : {}}
                 >
                     <Text style={styles.confirmButtonText}>Confirm</Text>
                 </Button>
 
             </View>
+            
             <Text style={styles.copyrightText}>Powered by Spot Inc.</Text>
 
         </SafeAreaView>

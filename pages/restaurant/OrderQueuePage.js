@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { SafeAreaView, View, Text, FlatList, StyleSheet, ActivityIndicator, Dimensions, Platform, TouchableOpacity } from "react-native";
-import { BREAKPOINTS, COLUMNS } from "./config";
+import { SafeAreaView, View, Text, FlatList, StyleSheet, ActivityIndicator, Dimensions, Platform, TouchableOpacity, Alert } from "react-native";
+import { BREAKPOINTS, COLUMNS } from "./screenSize";
 import { Ionicons } from "@expo/vector-icons";
+import supabase from "../../config/supabaseClient";
 
 export default function OrderQueuePage({ navigation }) {
   const [orders, setOrders] = useState([]);
@@ -9,7 +10,6 @@ export default function OrderQueuePage({ navigation }) {
 
   const { width } = Dimensions.get("window");
 
-  // Determine the number of columns based on platform and screen width
   const numColumns =
     Platform.OS === "web"
       ? width > BREAKPOINTS.webLarge
@@ -22,107 +22,149 @@ export default function OrderQueuePage({ navigation }) {
       : COLUMNS.mobile;
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setTimeout(() => {
-        setLoading(false);
-        setOrders([
-          // Mock data
-          {
-            table: 1,
-            dueText: "10 mins",
-            items: [ 
-              { name: "Burger", quantity: 2, details: ["No pickles", "Extra cheese"] },
-              { name: "Fries", quantity: 1, details: [] },
-              { name: "Fries", quantity: 1, details: [] },
-              { name: "Fries", quantity: 1, details: [] },
-              { name: "Fries", quantity: 1, details: [] },
-              { name: "Fries", quantity: 1, details: [] },
-              { name: "Fries", quantity: 1, details: [] },
-              { name: "Fries", quantity: 1, details: [] },
-              { name: "Fries", quantity: 1, details: [] },
-            ],
-          },
-          {
-            table: 2,
-            dueText: "35 mins",
-            items: [{ name: "Pizza", quantity: 1, details: ["Extra cheese"] }],
-          },
-          {
-            table: 3,
-            dueText: "5:35 PM",
-            items: [],
-          },
-          {
-            table: 4,
-            dueText: "5:35 PM",
-            items: [],
-          },
-          {
-            table: 4,
-            dueText: "5:35 PM",
-            items: [],
-          },
-          {
-            table: 4,
-            dueText: "5:35 PM",
-            items: [],
-          },
-          {
-            table: 4,
-            dueText: "5:35 PM",
-            items: [],
-          },
-          {
-            table: 4,
-            dueText: "5:35 PM",
-            items: [],
-          },
-          
-        ]);
-      }, 2000);
-    };
-
-    fetchData();
+    fetchOrders();
   }, []);
 
-  const renderOrder = ({ item }) => {
-    const headerBackgroundColor = item.items.length === 0 ? "#323e52" : "#24a45c";
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.from("orders").select("*").in("status", ["pending", "in-progress"]).order("created_at", { ascending: false });
+      if (error) throw error;
   
-    return (
-      <View style={[styles.orderCard, { width: `${100 / numColumns - 5}%` }]}>
-        <View style={[styles.headerContainer, { backgroundColor: headerBackgroundColor }]}>
-          <Text style={styles.tableText}>Table {item.table}</Text>
-          <Text style={styles.dueText}>Due: {item.dueText}</Text>
-        </View>
-        <View style={styles.itemsContainer}> 
-            {item.items.map((food, index) => (
-              <View key={index} style={styles.itemRow}>
-                <Text style={styles.foodName}>
-                  {food.quantity}  {food.name}
-                </Text>
-                <Text style={styles.foodDetails}>{food.details.join(", ")}</Text>
-              </View>
-            ))}
-        </View>
-        <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.completeButton} onPress={() => markAsCompleted(item.id)}>
-            <Text style={styles.completeButtonText}>Mark Completed</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.cancelButton} onPress={() => cancelOrder(item.id)}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
+      // Group and validate orders by table with user ID constraint
+      const validGroupedOrders = validateOrdersForTables(data || []);
+      setOrders(validGroupedOrders);
+    } catch (error) {
+      console.error("Error fetching orders:", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const validateOrdersForTables = (orders) => {
+    const userIdToTableMap = new Map(); 
+    const validOrders = {};
+  
+    for (const order of orders) {
+      const { user_id, table_no } = order;
+  
+      // Skip if no user ID
+      if (!user_id) continue;
+  
+      // Allow multiple orders for the same user at the same table
+      if (userIdToTableMap.has(user_id) && userIdToTableMap.get(user_id) !== table_no) {
+        console.error(`User ${user_id} is already assigned to Table ${userIdToTableMap.get(user_id)}. Skipping this order.`);
+        continue;
+      }
+  
+      userIdToTableMap.set(user_id, table_no);
+  
+      // Group orders by table number
+      if (!validOrders[table_no]) {
+        validOrders[table_no] = [];
+      }
+  
+      // Append the order to the table's list
+      validOrders[table_no].push(order);
+    }
+  
+    return Object.entries(validOrders);
   };
   
 
+
+
+  const markAsCompleted = async (orderId, table_no) => {
+    try {
+      const { error } = await supabase.from("orders").update({ status: "completed" }).eq("id", orderId);
+      if (error) throw error;
+  
+      // Remove the completed order from the state and ensure it's cleared when a new order comes in
+      setOrders((prevOrders) =>
+        prevOrders.map(([table, tableOrders]) => {
+          if (table === table_no) {
+            // Remove completed order from the table's orders
+            const updatedOrders = tableOrders.filter((order) => order.id !== orderId);
+            return [table, updatedOrders];
+          }
+          return [table, tableOrders];
+        })
+      );
+    } catch (error) {
+      console.error("Error updating order", error.message);
+    }
+  };
+  
+  const cancelOrder = async (orderId, table_no) => {
+    try {
+      const { error } = await supabase.from("orders").update({ status: "cancelled" }).eq("id", orderId);
+      if (error) throw error;
+  
+      // Remove the cancelled order from the state
+      setOrders((prevOrders) =>
+        prevOrders.map(([table, tableOrders]) => {
+          if (table === table_no) {
+            // Remove the cancelled order from the table's orders
+            const updatedOrders = tableOrders.filter((order) => order.id !== orderId);
+            
+            // If the table has no more orders, remove the table entirely
+            if (updatedOrders.length === 0) {
+              return null; // This will filter out the table from the state
+            }
+            return [table, updatedOrders];
+          }
+          return [table, tableOrders];
+        }).filter(Boolean) // Filter out null values (tables with no orders)
+      );
+    } catch (error) {
+      console.error("Error canceling order", error.message);
+    }
+  };
+  
+
+const renderOrder = (table_no, tableOrders) => {
+  const headerBackgroundColor = tableOrders.every((order) => order.quantity === 0) ? "#323e52" : "#459690";
+
+  return (
+    <View style={[styles.orderCard, { width: `${100 / numColumns}%` }]}>
+      <View style={[styles.headerContainer, { backgroundColor: headerBackgroundColor }]}>
+        <Text style={styles.tableText}>Table {table_no}</Text>
+        <Text style={styles.dueText}>Due: {tableOrders[0]?.due_time}</Text>
+      </View>
+      <View style={styles.itemsContainer}>
+        {tableOrders.map((order) => (
+          <View key={order.id} style={styles.itemRow}>
+            <Text style={styles.foodName}>
+              {order.quantity} {order.food_name}
+            </Text>
+            <Text style={styles.foodDetails}>{order.details}</Text>
+          </View>
+        ))}
+      </View>
+      <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={[styles.completeButton, { backgroundColor: "#24a45c" }]}
+          onPress={() => markAsCompleted(tableOrders[0].id, table_no)}
+        >
+          <Ionicons name="checkmark" size={24} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.cancelButton, { backgroundColor: "#e74c3c" }]}
+          onPress={() => cancelOrder(tableOrders[0].id, table_no)}
+        >
+          <Ionicons name="close" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+  
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.titleContainer}>
         <Text style={styles.title}>Orders Queue</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ transform: [{ rotate: '180deg' }] }}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ transform: [{ rotate: "180deg" }] }}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -133,11 +175,14 @@ export default function OrderQueuePage({ navigation }) {
       ) : (
         <FlatList
           data={orders}
-          renderItem={renderOrder}
-          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => {
+            const [table, tableOrders] = item;
+            return renderOrder(table, tableOrders);
+          }}
+          keyExtractor={(item) => `table-${item[0]}`}
           numColumns={numColumns}
           contentContainerStyle={styles.listContent}
-          columnWrapperStyle={numColumns > 1 ? styles.columnWrapperStyle : null} 
+          columnWrapperStyle={numColumns > 1 ? { justifyContent: "flex-start", alignItems: "flex-start", gap: 16 } : null}
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -154,18 +199,14 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     backgroundColor: "black",
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
     marginBottom: 16,
-  },
-  backButton:{
-    padding: 8,
-    marginLeft: "auto",
   },
   title: {
     fontSize: 24,
@@ -175,11 +216,6 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 16,
     paddingHorizontal: 8,
-  },
-  columnWrapperStyle: {
-    justifyContent: "flex-start",
-    alignItems: "stretch",
-    gap: 16,
   },
   orderCard: {
     backgroundColor: "#fff",
@@ -193,37 +229,36 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 250,
     maxWidth: 250,
-    overflow: 'hidden', 
+    overflow: "hidden",
     alignSelf: "flex-start",
+    flexGrow: 1,
     maxWidth: Platform.OS === "web" ? "calc(100% / 4 - 10px)" : "100%",
+  },
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 8,
   },
   completeButton: {
     borderWidth: 2,
-    borderColor: "#24a45c", 
+    borderColor: "#24a45c",
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
     alignItems: "center",
     marginHorizontal: 8,
+    width: "35%",
   },
   cancelButton: {
     borderWidth: 2,
-    borderColor: "#e74c3c", 
+    borderColor: "#e74c3c",
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
     alignItems: "center",
     marginHorizontal: 8,
-  },
-  completeButtonText: {
-    color: "#24a45c", 
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  cancelButtonText: {
-    color: "#e74c3c", 
-    fontSize: 14,
-    fontWeight: "bold",
+    width: "35%",
   },
   headerContainer: {
     paddingVertical: 8,
@@ -247,19 +282,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#dee2e6",
     paddingTop: 8,
     flex: 1,
-  },
-  itemRow: {
-    marginBottom: 8,
-    paddingHorizontal: 12,
-  },
-  foodName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#212529",
-  },
-  foodDetails: {
-    fontSize: 14,
-    color: "#6c757d",
+    alignSelf: "flex-start",
   },
   noOrdersText: {
     fontSize: 16,
@@ -275,5 +298,18 @@ const styles = StyleSheet.create({
   },
   loadingIndicator: {
     marginTop: 30,
+  },
+  itemRow: {
+    marginBottom: 8,
+    paddingHorizontal: 12,
+  },
+  foodName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#212529",
+  },
+  foodDetails: {
+    fontSize: 14,
+    color: "#6c757d",
   },
 });

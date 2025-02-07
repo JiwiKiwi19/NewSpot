@@ -5,8 +5,14 @@ import { createStackNavigator  } from '@react-navigation/stack';
 
 const { Navigator, Screen } = createStackNavigator();
 
+// Customer Pages
 import EnterNamePage from './pages/customer/EnterNamePage.js';
+import CompleteOrderPage from './pages/customer/CompleteOrderPage.js';
+import CustomerMenuPage from './pages/customer/CustomerMenuPage.js';
+
+// Restaurant Pages
 import OrderQueuePage from './pages/restaurant/OrderQueuePage.js'
+
 
 const MyTheme = {
   ...DefaultTheme,
@@ -20,12 +26,17 @@ export default function App() {
   return (
     <NavigationContainer theme={MyTheme}>
       <Navigator 
-      initialRouteName='OrderQueuePage'
+      initialRouteName='EnterNamePage'
       screenOptions={{
         headerShown: false, // headerMode="none" is deprecated so don't use that
       }}>
-        <Screen name="EnterNamePage" component={EnterNamePage} />
+        {/* Restaurant Pages */}
         <Screen name="OrderQueuePage" component={OrderQueuePage} />
+
+        {/* Customer Pages */}
+        <Screen name="EnterNamePage" component={EnterNamePage} />
+        <Screen name="CompleteOrderPage" component={CompleteOrderPage} />
+        <Screen name="CustomerMenuPage" component={CustomerMenuPage} />
       </Navigator>
     </NavigationContainer>
   );
